@@ -108,14 +108,35 @@ for id, infos in tqdm(donnees.items(), desc="Traitement des formations"):
         duree_Total=driver.find_element(By.CSS_SELECTOR, "div.classroom-workspace-overview__header ul li:nth-of-type(1)").text.strip().replace('\n', ' ')
         niveau=driver.find_element(By.CSS_SELECTOR, "div.classroom-workspace-overview__header ul li:nth-of-type(2)").text.strip().replace('\n', ' ')
         upload=driver.find_element(By.CSS_SELECTOR, "div.classroom-workspace-overview__header ul li:nth-of-type(3)").text.strip().replace('\n', ' ')
+        formation_nom=driver.find_element(By.CSS_SELECTOR, "h1.classroom-nav__title.clamp-1._headingText_e3b563._default_1i6ulk._sizeMedium_e3b563").text.strip()
+        formation_description=driver.find_element(By.CSS_SELECTOR, "div.classroom-workspace-overview__description > div").text.strip().replace('\n', ' ')
+
     except Exception as e:
         instructeur_headline=""
         duree_Total=""
         niveau=""
         upload=""
+        formation_nom=""
+        formation_description=""
         #print(f"Exception: {e}")
         pass
-    ecrire_dans_fichier(f" \n######### {id} ###########\nNom Formation : {infos['nom_formation']}\nLien Formation : {infos['lien_formation']}\nImage Formation : {infos['image_formation']}\nNom Formateur : {instructeur_name}\nDescription Formateur : {instructeur_headline}\nDurée Total : {duree_Total}\nNiveau : {niveau}\nDate Upload : {upload}\n")
+    
+    try:
+        fichiers_exos_div=driver.find_element(By.CSS_SELECTOR, "#hue-tabs-ember698-panel-OVERVIEW > div > div > div > div > div.classroom-layout-panel-layout-main.classroom-layout-panel-layout__main > div.ember-view.classroom-layout-panel-layout-main__module.classroom-workspace-overview__meta > section.classroom-workspace-overview__meta-section.classroom-workspace-overview__included-pane > ul > li:nth-child(1) > div")
+        fichiers_exos_btn=fichiers_exos_div.find_element(By.CSS_SELECTOR, "button")
+        if (fichiers_exos_btn):
+            
+            fichiers_exos_btn.click()
+            dwl_btn=WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".ember-view._button_ps32ck._small_ps32ck._secondary_ps32ck._emphasized_ps32ck._left_ps32ck._container_iq15dg._flat_1aegh9.classroom-exercise-files-modal__exercise-file-download"))
+            )
+            files_links=dwl_btn.get_attribute('href')
+    except:
+        files_links=""
+        pass
+        
+    print(f"\n---------\nlien = {files_links}\n---------\n")
+    ecrire_dans_fichier(f" \n######### {id} ###########\nNom Formation : {infos['nom_formation']}\nLien Formation : {infos['lien_formation']}\nImage Formation : {infos['image_formation']}\nNom Formateur : {instructeur_name}\nDescription Formateur : {instructeur_headline}\nDurée Total : {duree_Total}\nNiveau : {niveau}\nDate Upload : {upload}\nDescription :\n {formation_description}\n--------\n\n")
 
     sections_boutons=[]
     sections_lis=[]
@@ -185,7 +206,7 @@ for id, infos in tqdm(donnees.items(), desc="Traitement des formations"):
     if not os.path.exists(dossier_formation):
         os.makedirs(dossier_formation)
         
-    ecrire_dans_fichier(f" \n######### {id} ###########\nNom Formation : {info_generales['Infos_Generales']['Nom_Formation']}\nLien Formation : {info_generales['Infos_Generales']['Lien_Formation']}\nImage Formation : {info_generales['Infos_Generales']['Image_Formation']}\nNom Formateur : {instructeur_name}\nDescription Formateur : {instructeur_headline}\nDurée Total : {duree_Total}\nNiveau : {niveau}\nDate Upload : {upload}\n",'w',os.path.join(dossier_formation, "infos.txt"))
+    ecrire_dans_fichier(f" \n######### {id} ###########\nNom Formation : {info_generales['Infos_Generales']['Nom_Formation']}\nLien Formation : {info_generales['Infos_Generales']['Lien_Formation']}\nImage Formation : {info_generales['Infos_Generales']['Image_Formation']}\nNom Formateur : {instructeur_name}\nDescription Formateur : {instructeur_headline}\nDurée Total : {duree_Total}\nNiveau : {niveau}\nDate Upload : {upload}\nDescription :{formation_description}\n",'w',os.path.join(dossier_formation, "infos.txt"))
     
     for donnee in tqdm(info_generales['resultats'], desc="Téléchargement des Videos"):
         chapitre = to_snake_case(donnee['Chapitre'])
